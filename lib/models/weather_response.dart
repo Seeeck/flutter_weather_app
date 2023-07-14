@@ -102,10 +102,14 @@ class CurrentWeather {
 class Hourly {
   List<String> time;
   List<double> temperature2M;
+  List<int> weatherCode;
+  List<int> isDay;
 
   Hourly({
     required this.time,
     required this.temperature2M,
+    required this.weatherCode,
+    required this.isDay,
   });
 
   factory Hourly.fromRawJson(String str) => Hourly.fromJson(json.decode(str));
@@ -114,8 +118,11 @@ class Hourly {
 
   factory Hourly.fromJson(Map<String, dynamic> json) => Hourly(
         time: List<String>.from(json["time"].map((x) => x)),
-        temperature2M:
-            List<double>.from(json["temperature_2m"].map((x) => x.toDouble())),
+        temperature2M: List<double>.from(
+          json["temperature_2m"].map((x) => x.toDouble()),
+        ),
+        weatherCode: List<int>.from(json["weathercode"].map((x) => x)),
+        isDay: List<int>.from(json["is_day"].map((x) => x)),
       );
 
   Map<String, dynamic> toJson() => {
