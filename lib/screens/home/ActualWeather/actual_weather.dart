@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_weather_app/screens/home/ActualWeather/expanded_actual_weather.dart';
 import 'package:flutter_weather_app/screens/home/weather_notifier.dart';
 import 'package:flutter_weather_app/screens/home/widgets/actual_weather_animation.dart';
 
@@ -10,19 +11,9 @@ class ActualWeather extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder(
-      future: ref.read(weatherProvider).getCurrentWeatherData(),
-      builder: (context, snapshot) {
-        return Container(
-            margin: EdgeInsets.all(20),
-            child: RefreshIndicator(
-              onRefresh: ref.read(weatherProvider).getCurrentWeatherData,
-              child: SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                child: AnimatedCurrentWeatherWidget(),
-              ),
-            ));
-      },
+    return Container(
+      margin: const EdgeInsets.all(10),
+      child: AnimatedCurrentWeatherWidget(),
     );
   }
 }
@@ -34,16 +25,14 @@ class AnimatedCurrentWeatherWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    bool isWeek = ref.watch(weatherProvider).isWeek;
-    return AnimatedContainer(
-      height: isWeek ? MediaQuery.of(context).size.height * 0.5 : null,
-      curve: Curves.decelerate,
-      duration: Duration(seconds: 2),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: AnimatedContainer(
+            clipBehavior: Clip.antiAlias,
+            duration: const Duration(seconds: 1),
             width: double.infinity,
             decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -54,33 +43,39 @@ class AnimatedCurrentWeatherWidget extends ConsumerWidget {
                       Color.fromRGBO(21, 195, 246, 1)
                     ]),
                 borderRadius: BorderRadius.circular(60)),
-            child: Column(children: [
-              currentLocation(),
-              weatherPrincipalAnimation(),
-              CurrentTemperature(),
-              WeatherType(),
-              CurrentWeatherDate(),
-              Container(
-                margin: EdgeInsets.symmetric(vertical: 15),
-                width: MediaQuery.of(context).size.width * 0.7,
-                child: Divider(
-                  color: Color.fromARGB(157, 255, 255, 255),
-                ),
-              ),
-              AirAndHumidity(),
-            ]),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (MediaQuery.of(context).orientation ==
+                    Orientation.landscape) {}
+
+                return RefreshIndicator(
+                  onRefresh: ref.read(weatherProvider).getCurrentWeatherData,
+                  child: SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(maxHeight: constraints.minHeight),
+                      child: IntrinsicHeight(child: ExpandedActualWeather()),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-          Container(
+        ),
+        FractionallySizedBox(
+          widthFactor: 0.65,
+          child: Container(
             height: 10,
-            width: MediaQuery.of(context).size.width * 0.7,
-            decoration: BoxDecoration(
+            width: MediaQuery.of(context).size.width * 0.8,
+            decoration: const BoxDecoration(
                 color: Color.fromRGBO(9, 63, 142, 1),
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(100),
                     bottomRight: Radius.circular(100))),
-          )
-        ],
-      ),
+          ),
+        )
+      ],
     );
   }
 }
@@ -95,49 +90,58 @@ class AirAndHumidity extends ConsumerWidget {
     Map<String, dynamic> currentWeather =
         ref.watch(weatherProvider).currentWeather;
     return Container(
-      margin: EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Column(
-            children: [
-              Icon(
-                Icons.wind_power_outlined,
-                color: const Color.fromARGB(211, 255, 255, 255),
-              ),
-              Text(
-                currentWeather['windSpeed'].toString() + " km/h",
-                style: TextStyle(color: Colors.white),
-              ),
-              Text('Viento',
-                  style: TextStyle(
-                      color: const Color.fromARGB(171, 255, 255, 255)))
-            ],
-          ),
-          SizedBox(
-            width: 20,
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width * 0.2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: double.infinity,
-                  child: Icon(
-                    Icons.arrow_right_alt_rounded,
+          Flexible(
+            child: FittedBox(
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.wind_power_outlined,
                     color: Color.fromARGB(211, 255, 255, 255),
+                    size: 20,
                   ),
-                ),
-                AirDirection(),
-                Text(
-                  "Direccion del viento",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: const Color.fromARGB(171, 255, 255, 255)),
-                )
-              ],
+                  FittedBox(
+                    child: Text(
+                      "${currentWeather['windSpeed']} km/h",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  FittedBox(
+                    child: const Text('Viento',
+                        style: TextStyle(
+                            color: Color.fromARGB(171, 255, 255, 255))),
+                  )
+                ],
+              ),
+            ),
+          ),
+          Flexible(
+            child: FittedBox(
+              child: const Column(
+                children: [
+                  FittedBox(
+                    child: Icon(
+                      Icons.arrow_right_alt_rounded,
+                      color: Color.fromARGB(211, 255, 255, 255),
+                      size: 20,
+                    ),
+                  ),
+                  FittedBox(child: AirDirection()),
+                  FittedBox(
+                    child: Text(
+                      "Direccion del viento",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color.fromARGB(171, 255, 255, 255),
+                      ),
+                    ),
+                  )
+                ],
+              ),
             ),
           )
         ],
@@ -155,14 +159,18 @@ class CurrentWeatherDate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     Map<String, dynamic> currentWeather =
         ref.watch(weatherProvider).currentWeather;
-    return Container(
+    return FittedBox(
       child: Text(
         currentWeather['currentDay'] +
             " " +
             currentWeather['dayNumber'].toString() +
             " de " +
             currentWeather['monthDay'],
-        style: TextStyle(color: const Color.fromARGB(137, 255, 255, 255)),
+        style: MediaQuery.of(context).orientation == Orientation.portrait
+            ? const TextStyle(
+                color: Color.fromARGB(171, 255, 255, 255), fontSize: 14)
+            : const TextStyle(color: Colors.white, fontSize: 25),
+        textAlign: TextAlign.center,
       ),
     );
   }
@@ -177,18 +185,23 @@ class CurrentTemperature extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     Map<String, dynamic> currentWeather =
         ref.watch(weatherProvider).currentWeather;
-    return Container(
-      margin: EdgeInsets.only(top: 10),
-      child: Text(
-        currentWeather['temperature'].toString() + "°",
-        style: TextStyle(color: Colors.white, fontSize: 80),
+    return FittedBox(
+      child: Container(
+        margin: const EdgeInsets.only(top: 10),
+        child: Text(
+          "${currentWeather['temperature']}°",
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 90,
+          ),
+        ),
       ),
     );
   }
 }
 
-class weatherPrincipalAnimation extends ConsumerWidget {
-  const weatherPrincipalAnimation({
+class WeatherPrincipalAnimation extends ConsumerWidget {
+  const WeatherPrincipalAnimation({
     super.key,
   });
 
@@ -197,13 +210,13 @@ class weatherPrincipalAnimation extends ConsumerWidget {
     bool isLoading = ref.watch(weatherProvider).loading;
     Map<String, dynamic> currentWeather =
         ref.watch(weatherProvider).currentWeather;
-    return Container(
+    return SizedBox(
       child: isLoading
           ? Container(
-              margin: EdgeInsets.all(50),
+              margin: const EdgeInsets.all(50),
               height: 100,
               width: 100,
-              child: CircularProgressIndicator(
+              child: const CircularProgressIndicator(
                 color: Colors.white,
               ),
             )
@@ -216,8 +229,8 @@ class weatherPrincipalAnimation extends ConsumerWidget {
   }
 }
 
-class currentLocation extends ConsumerWidget {
-  const currentLocation({
+class CurrentLocation extends ConsumerWidget {
+  const CurrentLocation({
     super.key,
   });
 
@@ -226,29 +239,31 @@ class currentLocation extends ConsumerWidget {
     Map<String, dynamic> currentWeather =
         ref.watch(weatherProvider).currentWeather;
     bool isLoading = ref.watch(weatherProvider).loading;
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.04,
-      margin: EdgeInsets.only(top: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: isLoading
-            ? [
-                Container(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: isLoading
+          ? [
+              const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
+              )
+            ]
+          : [
+              Flexible(
+                  child: const Icon(Icons.location_on, color: Colors.white)),
+              Flexible(
+                child: FittedBox(
+                  child: Text(
+                    currentWeather['location']!,
+                    style: const TextStyle(color: Colors.white, fontSize: 25),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                )
-              ]
-            : [
-                Icon(Icons.location_on, color: Colors.white),
-                Text(
-                  currentWeather['location']!,
-                  style: TextStyle(color: Colors.white, fontSize: 25),
-                )
-              ],
-      ),
+                ),
+              )
+            ],
     );
   }
 }
@@ -285,13 +300,10 @@ class AirDirection extends ConsumerWidget {
       }
     }
 
-    return Container(
-      width: double.infinity,
-      child: Text(
-        textAlign: TextAlign.center,
-        getDirectionText(numberDirection),
-        style: TextStyle(color: Colors.white),
-      ),
+    return Text(
+      textAlign: TextAlign.center,
+      getDirectionText(numberDirection),
+      style: TextStyle(color: Colors.white),
     );
   }
 }
